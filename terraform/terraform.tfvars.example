@@ -16,11 +16,6 @@ databricks_endpoint        = "your-company-serving-endpoint-name"
 # OAuth設定
 oauth_redirect_uri = "https://your-company-domain.com/oauth/callback"
 
-# セキュリティ設定（オプション）
-basic_auth_enabled = false  # Basic認証を有効にする場合はtrue
-basic_auth_user = "admin"   # Basic認証ユーザー名
-basic_auth_pass = "secure-password-123"  # Basic認証パスワード
-
 # ネットワーク設定
 vpc_cidr = "10.0.0.0/16"
 public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
