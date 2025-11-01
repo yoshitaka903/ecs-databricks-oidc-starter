@@ -137,39 +137,6 @@ Databricks OAuth設定で Redirect URI を以下に更新:
 https://your-company-domain.com/oauth/callback
 ```
 
-## OIDC機能詳細
-
-### OIDC Flow
-1. **Authorization Request**: `openid` scope を含むOAuth要求
-2. **Token Exchange**: authorization code → access_token + id_token
-3. **ID Token Processing**: JWT デコードしてユーザー情報抽出
-4. **User Info Display**: 名前、メール、ユーザーIDを画面表示
-
-### セキュリティ
-- **Nonce検証**: CSRF攻撃防止
-- **JWT署名検証** (本番環境で有効化)
-- **Token有効期限管理**
-
-## SSO
-
-### Azure AD統合例
-```javascript
-// Azure AD OIDC設定例
-const OIDC_CONFIG = {
-  issuer: "https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0",
-  jwks_uri: "https://login.microsoftonline.com/YOUR_TENANT_ID/discovery/v2.0/keys"
-};
-```
-
-### Okta統合例
-```javascript
-// Okta OIDC設定例
-const OIDC_CONFIG = {
-  issuer: "https://YOUR_COMPANY.okta.com/oauth2/default",
-  jwks_uri: "https://YOUR_COMPANY.okta.com/oauth2/default/v1/keys"
-};
-```
-
 ## モニタリング
 
 ### CloudWatch Logs
@@ -198,21 +165,6 @@ sudo systemctl status localtunnel
 curl http://$(terraform output -raw proxy_public_ip):8080/health
 curl https://ecs-databricks-oauth.loca.lt/health
 ```
-
-## カスタマイズ
-
-### 必須変更項目
-- [ ] `terraform.tfvars` の全設定値
-- [ ] Databricks OAuth Redirect URI
-- [ ] SSL証明書の設定
-- [ ] VPCネットワーク設計
-- [ ] Security Group ルール
-
-### オプション設定
-- [ ] CloudWatch アラート設定
-- [ ] Auto Scaling設定
-- [ ] Blue/Green デプロイ設定
-- [ ] バックアップ戦略
 
 ---
 **重要**: 本番環境では必ずセキュリティレビューを実施し、会社のセキュリティポリシーに準拠することを確認してください。
