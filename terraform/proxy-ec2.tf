@@ -34,8 +34,9 @@ data "aws_ami" "amazon_linux" {
 
 # Proxy用セキュリティグループ
 resource "aws_security_group" "proxy" {
-  name_description = "${var.app_name}-proxy-sg"
-  vpc_id           = aws_vpc.main.id
+  name        = "${var.app_name}-proxy-sg"
+  description = "Security group for proxy server"
+  vpc_id      = aws_vpc.main.id
 
   # SSH接続 (管理用)
   ingress {
