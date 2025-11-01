@@ -27,7 +27,7 @@
 - Terraform v1.0以上
 - SSL証明書（本番環境）
 
-## 🚀 クイックスタート（95%自動化）
+## デプロイ手順
 
 ### ワンコマンドデプロイ
 ```bash
@@ -38,14 +38,6 @@ cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 # 全自動デプロイ実行
 ./deploy.sh
 ```
-
-### 自動化レベル
-| フェーズ | 自動化率 | 説明 |
-|----------|----------|------|
-| **初回設定** | 10% | Databricks OAuth設定、terraform.tfvars編集 |
-| **インフラ構築** | 100% | Terraform完全自動化 |
-| **アプリデプロイ** | 100% | CodeBuild + ECS自動デプロイ |
-| **更新デプロイ** | 100% | ワンコマンド自動更新 |
 
 ## 詳細セットアップ手順
 
@@ -63,17 +55,17 @@ cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 `terraform/terraform.tfvars` を編集:
 ```hcl
 # AWS設定
-aws_region = "ap-northeast-1"  # 会社のリージョンに変更
-app_name = "databricks-oauth-app"
+aws_region = "ap-northeast-1"
+app_name = "databricks-oauth-app" # 任意
 
-# IP制限設定（会社のIP範囲に変更）
+# IP制限設定(必要な場合)
 allowed_ips = [
-  "YOUR_COMPANY_IP_RANGE/24",
-  "VPN_IP_RANGE/24"
+  "YOUR_COMPANY_IP_RANGE",
+  "VPN_IP_RANGE"
 ]
 
-# Databricks設定（会社の環境に変更）
-databricks_host = "adb-xxxxxxxxx.xx.azuredatabricks.net"
+# Databricks設定
+databricks_host = "xxxxxxxxx"
 databricks_client_id = "your-company-client-id"
 databricks_client_secret = "your-company-client-secret"
 databricks_endpoint = "your-company-serving-endpoint-name"
@@ -98,21 +90,6 @@ aws codebuild start-build --project-name $(terraform output -raw codebuild_proje
 aws codebuild batch-get-builds --ids $(aws codebuild list-builds-for-project --project-name $(terraform output -raw codebuild_project_name) --query 'ids[0]' --output text)
 ```
 
-#### オプションB: ローカルDocker使用
-```bash
-# ECR ログイン
-aws ecr get-login-password --region $(terraform output -raw aws_region) | docker login --username AWS --password-stdin $(terraform output -raw ecr_repository_url)
-
-# イメージビルド
-docker build -t databricks-oauth-app .
-
-# タグ付け
-docker tag databricks-oauth-app:latest $(terraform output -raw ecr_repository_url):latest
-
-# プッシュ
-docker push $(terraform output -raw ecr_repository_url):latest
-```
-
 ### 5. ECSサービス更新
 ```bash
 # タスク定義更新
@@ -131,7 +108,7 @@ aws ecs update-service --cluster $(terraform output -raw ecs_cluster_name) --ser
 # ALBにSSL証明書を適用
 ```
 
-#### オプションB: EC2プロキシサーバー（推奨）
+#### オプションB: EC2プロキシサーバー
 ```bash
 # EC2プロキシサーバーを自動でプロビジョニング
 terraform apply
@@ -142,18 +119,6 @@ terraform output proxy_setup_commands
 
 # localtunnel URL確認（自動設定）
 # https://ecs-databricks-oauth.loca.lt
-```
-
-#### オプションC: ローカルプロキシ（開発用のみ）
-```bash
-# localtunnel インストール
-npm install -g localtunnel
-
-# プロキシサーバー起動
-node proxy-server.js &
-
-# localtunnel 開始
-lt --port 8080 --subdomain your-company-app
 ```
 
 ### 7. Databricks Redirect URI更新
@@ -170,12 +135,12 @@ https://your-company-domain.com/oauth/callback
 3. **ID Token Processing**: JWT デコードしてユーザー情報抽出
 4. **User Info Display**: 名前、メール、ユーザーIDを画面表示
 
-### セキュリティ強化
+### セキュリティ
 - **Nonce検証**: CSRF攻撃防止
 - **JWT署名検証** (本番環境で有効化)
 - **Token有効期限管理**
 
-## 企業SSO統合
+## SSO
 
 ### Azure AD統合例
 ```javascript
@@ -224,42 +189,7 @@ curl http://$(terraform output -raw proxy_public_ip):8080/health
 curl https://ecs-databricks-oauth.loca.lt/health
 ```
 
-## 企業環境でのセキュリティ考慮事項
-
-### 本番環境設定
-1. **JWT署名検証**: JWKS エンドポイントからの公開鍵検証
-2. **HTTPS強制**: ALB + SSL証明書使用
-3. **Secrets管理**: AWS Secrets Manager活用
-4. **ネットワーク分離**: Private Subnet + NAT Gateway
-5. **VPC Endpoints**: S3、ECR用のVPCエンドポイント設定
-
-### コンプライアンス
-- **最小権限**: IAM Role最小化
-- **監査ログ**: CloudTrail + Databricks Audit Logs
-- **データ保護**: 機密情報の適切な暗号化
-- **アクセス制御**: VPN/PrivateLink経由のアクセス限定
-
-## トラブルシューティング
-
-### よくある問題
-1. **Redirect URI mismatch**: 会社ドメイン設定とアプリケーション設定の確認
-2. **CORS Error**: ALB Security Group設定確認
-3. **ID Token missing**: `openid` scope が含まれているか確認
-4. **Company firewall**: アウトバウンド通信許可設定
-
-### デバッグコマンド
-```bash
-# アプリケーションログ
-aws logs tail /ecs/databricks-oauth-app --follow
-
-# ECS Service状態
-aws ecs describe-services --cluster <cluster-name> --services <service-name>
-
-# Target Group Health
-aws elbv2 describe-target-health --target-group-arn <target-group-arn>
-```
-
-## 企業環境カスタマイズポイント
+## カスタマイズ
 
 ### 必須変更項目
 - [ ] `terraform.tfvars` の全設定値
@@ -274,10 +204,5 @@ aws elbv2 describe-target-health --target-group-arn <target-group-arn>
 - [ ] Blue/Green デプロイ設定
 - [ ] バックアップ戦略
 
-## サポート
-
-企業環境での導入支援が必要な場合は、社内DevOpsチームまたはクラウドアーキテクトにご相談ください。
-
 ---
-
 **重要**: 本番環境では必ずセキュリティレビューを実施し、会社のセキュリティポリシーに準拠することを確認してください。
