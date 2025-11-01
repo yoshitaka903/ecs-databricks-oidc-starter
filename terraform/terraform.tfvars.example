@@ -1,0 +1,43 @@
+# Terraform Variables Configuration
+
+# 基本設定
+aws_region = "ap-northeast-1"
+app_name   = "ecs-databricks-app"
+
+# セキュリティ設定
+allowed_ips = ["YOUR_COMPANY_IP_RANGE/24"]  # 会社のIPアドレス範囲を指定
+
+# Databricks設定
+databricks_host            = "https://your-company-databricks-workspace.azuredatabricks.net"
+databricks_client_id       = "your_company_client_id"
+databricks_client_secret   = "your_company_client_secret"
+databricks_endpoint        = "your-company-serving-endpoint-name"
+
+# OAuth設定
+oauth_redirect_uri = "https://your-company-domain.com/oauth/callback"
+
+# セキュリティ設定（オプション）
+basic_auth_enabled = false  # Basic認証を有効にする場合はtrue
+basic_auth_user = "admin"   # Basic認証ユーザー名
+basic_auth_pass = "secure-password-123"  # Basic認証パスワード
+
+# ネットワーク設定
+vpc_cidr = "10.0.0.0/16"
+public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+# availability_zones = ["ap-northeast-1a", "ap-northeast-1c"]  # オプション: 特定のAZを指定
+
+# ECS設定（オプション）
+ecs_cpu           = "256"  # CPUユニット: "256", "512", "1024", "2048"
+ecs_memory        = "512"  # メモリ (MB): "512", "1024", "2048", "4096"
+ecs_desired_count = 1      # 希望タスク数
+
+# ログ設定
+log_retention_days = 7
+
+# タグ設定（オプション）
+tags = {
+  Project     = "ECS-Databricks-Integration"
+  Environment = "Development"
+  Owner       = "YourName"
+  Purpose     = "OAuth-U2M-Verification"
+}
