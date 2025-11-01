@@ -2,7 +2,11 @@ const http = require('http');
 const httpProxy = require('http-proxy');
 
 const proxy = httpProxy.createProxyServer({});
-const ALB_URL = 'http://ecs-databricks-app-415024499.ap-northeast-1.elb.amazonaws.com';
+
+// 環境変数から ALB URL を取得（デフォルト値付き）
+const ALB_URL = process.env.ALB_URL || process.env.TARGET_URL || 'http://localhost:3000';
+
+console.log(`Target URL: ${ALB_URL}`);
 
 const server = http.createServer((req, res) => {
   console.log(`Proxying: ${req.method} ${req.url}`);

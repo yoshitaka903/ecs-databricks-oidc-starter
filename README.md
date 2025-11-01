@@ -121,6 +121,16 @@ terraform output proxy_setup_commands
 # https://ecs-databricks-oauth.loca.lt
 ```
 
+#### オプションC: ローカルプロキシサーバー
+```bash
+# 環境変数でALB URLを設定してプロキシサーバーを起動
+export ALB_URL="http://$(terraform output -raw alb_dns_name)"
+node proxy-server.js
+
+# localtunnelでHTTPS化
+lt --port 8080 --subdomain ecs-databricks-oauth
+```
+
 ### 7. Databricks Redirect URI更新
 Databricks OAuth設定で Redirect URI を以下に更新:
 ```
