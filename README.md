@@ -1,23 +1,15 @@
 # Databricks OAuth U2M with OIDC Support - Production Ready
 
-**企業環境移行対応版** - Databricks OAuth User-to-Machine (U2M) 認証を使用したテキスト要約アプリケーション。OIDC (OpenID Connect) 対応によりユーザー情報の表示とSSO統合をサポート。
+# Sample ECS application demonstrating OIDC SSO integration with Databricks Model Serving
 
-## OIDC版の新機能
-
-- **OpenID Connect**: `openid` scope による拡張認証
-- **ユーザー情報表示**: ID Token からユーザー属性を取得・表示
-- **SSO統合準備**: 企業IDプロバイダーとの連携可能
-- **Nonce検証**: CSRF攻撃防止
-- **JWT処理**: ID Token のデコードと検証機能
-
-## 主要機能
+## 機能
 
 - **OAuth U2M**: ユーザー権限でのDatabricks API呼び出し
 - **ECS Fargate**: AWS上でのコンテナ化デプロイ
 - **HTTPS対応**: ALB + SSL証明書 または localtunnel
 - **セッション管理**: Express Session による状態管理
 
-## 企業環境での導入前提条件
+## 導入前提条件
 
 ### Databricks設定
 1. **OAuth App作成**
@@ -26,7 +18,7 @@
    - Scopes: `openid`, `all-apis`, `offline_access`
 
 2. **Model Serving エンドポイント**
-   - Claude Sonnet 4 モデルのエンドポイント作成
+   - モデルのエンドポイント作成(または基盤モデルを利用)
    - エンドポイント名をメモ
 
 ### AWS設定
@@ -35,12 +27,32 @@
 - Terraform v1.0以上
 - SSL証明書（本番環境）
 
-## セットアップ手順
+## 🚀 クイックスタート（95%自動化）
+
+### ワンコマンドデプロイ
+```bash
+# 設定ファイル準備
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+# terraform.tfvars を編集（Databricks設定を入力）
+
+# 全自動デプロイ実行
+./deploy.sh
+```
+
+### 自動化レベル
+| フェーズ | 自動化率 | 説明 |
+|----------|----------|------|
+| **初回設定** | 10% | Databricks OAuth設定、terraform.tfvars編集 |
+| **インフラ構築** | 100% | Terraform完全自動化 |
+| **アプリデプロイ** | 100% | CodeBuild + ECS自動デプロイ |
+| **更新デプロイ** | 100% | ワンコマンド自動更新 |
+
+## 詳細セットアップ手順
 
 ### 1. リポジトリクローン
 ```bash
-git clone <your-company-repository>
-cd databricks-oauth-oidc-production
+git clone https://github.com/yoshitaka903/ecs-databricks-oidc-starter.git
+cd ecs-databricks-oidc-starter
 ```
 
 ### 2. 環境設定
