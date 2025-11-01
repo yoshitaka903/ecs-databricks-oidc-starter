@@ -60,8 +60,8 @@ const PORT = 8080;
 // 環境変数からALB URLを取得
 const TARGET_URL = process.env.ALB_URL || 'PLACEHOLDER_ALB_URL';
 
-console.log(`Starting proxy server on port ${PORT}`);
-console.log(`Proxying to: ${TARGET_URL}`);
+console.log(`Starting proxy server on port $${PORT}`);
+console.log(`Proxying to: $${TARGET_URL}`);
 
 // ヘルスチェック
 app.get('/health', (req, res) => {
@@ -74,14 +74,14 @@ app.get('/health', (req, res) => {
 
 // 全リクエストをALBに転送
 app.use('/', (req, res) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log(`$${new Date().toISOString()} - $${req.method} $${req.url}`);
   
   proxy.web(req, res, { 
     target: TARGET_URL,
     changeOrigin: true,
     timeout: 30000
   }, (err) => {
-    console.error(`Proxy error: ${err.message}`);
+    console.error(`Proxy error: $${err.message}`);
     res.status(500).send('Proxy Error');
   });
 });
@@ -96,7 +96,7 @@ proxy.on('error', (err, req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Proxy server running on http://0.0.0.0:${PORT}`);
+  console.log(`Proxy server running on http://0.0.0.0:$${PORT}`);
 });
 EOF
 
