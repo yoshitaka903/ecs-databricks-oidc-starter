@@ -52,12 +52,6 @@ variable "databricks_endpoint" {
   default     = "databricks-claude-sonnet-4"
 }
 
-variable "oauth_redirect_uri" {
-  description = "OAuth Redirect URI for authentication"
-  type        = string
-  default     = "https://your-app-name.loca.lt/oauth/callback"
-}
-
 # ネットワーク設定
 variable "vpc_cidr" {
   description = "VPC CIDR block"

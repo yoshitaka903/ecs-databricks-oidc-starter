@@ -18,6 +18,8 @@ terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 terraform/terraform.tfvars
 *.tfplan
+*.tfstate
+*.tfstate.backup
 terraform/tfplan
 
 # Docker
