@@ -1,5 +1,3 @@
-# Databricks OAuth U2M with OIDC Support - Production Ready
-
 # Sample ECS application demonstrating OIDC SSO integration with Databricks Model Serving
 
 ## 機能
