@@ -11,18 +11,8 @@ output "load_balancer_dns" {
 }
 
 output "application_url" {
-  description = "Application URL (HTTP via ALB)"
+  description = "Application URL (HTTP via ALB - for direct access)"
   value       = "http://${aws_lb.main.dns_name}"
-}
-
-output "oauth_redirect_uri" {
-  description = "OAuth Redirect URI for Databricks configuration (will use ngrok HTTPS)"
-  value       = "https://[NGROK_DOMAIN]/oauth/callback"
-}
-
-output "ngrok_command" {
-  description = "Command to run ngrok for HTTPS tunneling"
-  value       = "ngrok http ${aws_lb.main.dns_name}:80"
 }
 
 output "vpc_id" {
@@ -69,25 +59,4 @@ output "aws_region" {
 output "target_group_arn" {
   description = "ARN of the target group"
   value       = aws_lb_target_group.app.arn
-}
-
-# EC2 Proxy outputs
-output "proxy_instance_id" {
-  description = "EC2 Proxy instance ID"
-  value       = aws_instance.proxy.id
-}
-
-output "proxy_public_ip" {
-  description = "EC2 Proxy public IP address"
-  value       = aws_instance.proxy.public_ip
-}
-
-output "proxy_setup_commands" {
-  description = "Commands to check proxy status"
-  value = [
-    "ssh -i your-key.pem ec2-user@${aws_instance.proxy.public_ip}",
-    "sudo systemctl status proxy-server",
-    "sudo systemctl status localtunnel",
-    "curl http://${aws_instance.proxy.public_ip}:8080/health"
-  ]
 }

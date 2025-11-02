@@ -4,15 +4,15 @@
 
 - **OAuth U2M**: ユーザー権限でのDatabricks API呼び出し
 - **ECS Fargate**: AWS上でのコンテナ化デプロイ
-- **HTTPS対応**: ALB + SSL証明書 または localtunnel
+- **HTTPS対応**: CloudFront による HTTPS アクセス
 - **セッション管理**: Express Session による状態管理
 
 ## 導入前提条件
 
 ### Databricks設定
 1. **OAuth App作成**
-   - Databricks ワークスペース → Settings → Identity and access → OAuth apps
-   - Redirect URI: `https://YOUR_COMPANY_DOMAIN/oauth/callback`
+   - Databricks ワークスペース → Settings → Developer → App connections
+   - Redirect URI: デプロイ後に CloudFront ドメインで更新 (例: `https://xxxxx.cloudfront.net/oauth/callback`)
    - Scopes: `openid`, `all-apis`, `offline_access`
 
 2. **Model Serving エンドポイント**
@@ -97,42 +97,29 @@ terraform apply
 aws ecs update-service --cluster $(terraform output -raw ecs_cluster_name) --service $(terraform output -raw ecs_service_name) --force-new-deployment
 ```
 
-### 6. HTTPS設定
+### 6. HTTPS アクセス設定
 
-#### オプションA: ALB + SSL証明書（推奨）
+CloudFront が自動的にデプロイされ、HTTPS アクセスが可能になります。
+
 ```bash
-# Route53でドメイン設定
-# ACMでSSL証明書取得
-# ALBにSSL証明書を適用
-```
+# CloudFront ドメインを確認
+terraform output cloudfront_https_url
 
-#### オプションB: EC2プロキシサーバー
-```bash
-# EC2プロキシサーバーを自動でプロビジョニング
-terraform apply
-
-# プロキシ状況確認
-terraform output proxy_public_ip
-terraform output proxy_setup_commands
-
-# localtunnel URL確認（自動設定）
-# https://ecs-databricks-oauth.loca.lt
-```
-
-#### オプションC: ローカルプロキシサーバー
-```bash
-# 環境変数でALB URLを設定してプロキシサーバーを起動
-export ALB_URL="http://$(terraform output -raw alb_dns_name)"
-node proxy-server.js
-
-# localtunnelでHTTPS化
-lt --port 8080 --subdomain ecs-databricks-oauth
+# 出力例: https://xxxxx.cloudfront.net
 ```
 
 ### 7. Databricks Redirect URI更新
-Databricks OAuth設定で Redirect URI を以下に更新:
-```
-https://your-company-domain.com/oauth/callback
+
+Databricks OAuth設定で Redirect URI を CloudFront ドメインで更新:
+
+1. Databricks ワークスペース → Settings → Developer → App connections
+2. 作成した OAuth アプリケーションを選択
+3. Redirect URLs に以下を追加:
+```bash
+# terraform output から取得
+terraform output oauth_redirect_uri_cloudfront
+
+# 例: https://xxxxx.cloudfront.net/oauth/callback
 ```
 
 ## モニタリング
@@ -140,28 +127,31 @@ https://your-company-domain.com/oauth/callback
 ### CloudWatch Logs
 ```bash
 # ECSアプリケーションログ
-aws logs tail /ecs/databricks-oauth-app --follow
-
-# EC2プロキシログ
-aws logs tail /aws/ec2/databricks-oauth-app-proxy --follow
+aws logs tail $(terraform output -raw cloudwatch_log_group) --follow
 ```
 
 ### ECS Tasks
 ```bash
+# タスク一覧
 aws ecs list-tasks --cluster $(terraform output -raw ecs_cluster_name)
+
+# タスク詳細
 aws ecs describe-tasks --cluster $(terraform output -raw ecs_cluster_name) --tasks <task-arn>
 ```
 
-### EC2プロキシ監視
+### ターゲットグループヘルスチェック
 ```bash
-# プロキシサーバー状態確認
-ssh -i your-key.pem ec2-user@$(terraform output -raw proxy_public_ip)
-sudo systemctl status proxy-server
-sudo systemctl status localtunnel
+# ターゲットの健全性確認
+aws elbv2 describe-target-health --target-group-arn $(terraform output -raw target_group_arn)
+```
 
-# ヘルスチェック
-curl http://$(terraform output -raw proxy_public_ip):8080/health
-curl https://ecs-databricks-oauth.loca.lt/health
+### アプリケーションアクセス
+```bash
+# HTTPS URL (CloudFront - 推奨)
+terraform output cloudfront_https_url
+
+# HTTP URL (ALB - 直接アクセス)
+terraform output application_url
 ```
 
 ---
