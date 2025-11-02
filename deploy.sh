@@ -86,20 +86,21 @@ deploy_infrastructure() {
 # Docker イメージビルド
 build_and_push_image() {
     log_info "Docker イメージをビルド中..."
-    
-    # CodeBuild プロジェクト名取得
+
+    # リージョンとCodeBuild プロジェクト名取得
+    local aws_region=$(cd terraform && terraform output -raw aws_region)
     local codebuild_project=$(cd terraform && terraform output -raw codebuild_project_name)
-    
+
     # ビルド開始
-    log_info "CodeBuild でビルド開始: $codebuild_project"
-    local build_id=$(aws codebuild start-build --project-name "$codebuild_project" --query 'build.id' --output text)
+    log_info "CodeBuild でビルド開始: $codebuild_project (Region: $aws_region)"
+    local build_id=$(aws codebuild start-build --region "$aws_region" --project-name "$codebuild_project" --query 'build.id' --output text)
     
     log_info "Build ID: $build_id"
     log_info "ビルド状況を監視中..."
     
     # ビルド完了まで待機
     while true; do
-        local build_status=$(aws codebuild batch-get-builds --ids "$build_id" --query 'builds[0].buildStatus' --output text)
+        local build_status=$(aws codebuild batch-get-builds --region "$aws_region" --ids "$build_id" --query 'builds[0].buildStatus' --output text)
         
         case $build_status in
             "IN_PROGRESS")
@@ -118,6 +119,7 @@ build_and_push_image() {
                 # ログ表示
                 log_info "CodeBuild ログを表示..."
                 aws logs filter-log-events \
+                    --region "$aws_region" \
                     --log-group-name "/aws/codebuild/$codebuild_project" \
                     --start-time $(($(date +%s) - 3600))000 \
                     --query 'events[*].message' \
@@ -136,20 +138,23 @@ build_and_push_image() {
 # ECS サービス更新
 update_ecs_service() {
     log_info "ECS サービスを更新中..."
-    
+
+    local aws_region=$(cd terraform && terraform output -raw aws_region)
     local cluster_name=$(cd terraform && terraform output -raw ecs_cluster_name)
     local service_name=$(cd terraform && terraform output -raw ecs_service_name)
-    
+
     # サービス強制更新
     aws ecs update-service \
+        --region "$aws_region" \
         --cluster "$cluster_name" \
         --service "$service_name" \
         --force-new-deployment \
         --query 'service.serviceName' \
         --output text
-    
+
     log_info "ECS タスク更新完了まで待機中..."
     aws ecs wait services-stable \
+        --region "$aws_region" \
         --cluster "$cluster_name" \
         --services "$service_name"
     
