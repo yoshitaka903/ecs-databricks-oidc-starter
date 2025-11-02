@@ -32,13 +32,15 @@ resource "aws_codebuild_project" "app_build" {
 
     environment_variable {
       name  = "IMAGE_TAG"
-      value = "latest"
+      value = "nodejs"
     }
   }
 
   source {
-    type = "NO_SOURCE"
-    buildspec = "buildspec.yml"
+    type            = "GITHUB"
+    location        = "https://github.com/yoshitaka903/ecs-databricks-oidc-starter.git"
+    git_clone_depth = 1
+    buildspec       = "buildspec.yml"
   }
 
   tags = merge(var.tags, {
