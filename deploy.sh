@@ -159,35 +159,31 @@ update_ecs_service() {
 # デプロイ状況確認
 verify_deployment() {
     log_info "デプロイ状況を確認中..."
-    
+
     cd terraform
-    
+
     # 出力情報表示
     echo ""
     echo "=========================================="
     log_success "デプロイ完了！"
     echo "=========================================="
-    
+
     echo ""
     log_info "アクセス情報:"
-    echo "  ALB URL:    $(terraform output -raw application_url)"
-    echo "  HTTPS URL:  https://ecs-databricks-oauth.loca.lt"
+    echo "  HTTPS URL (CloudFront): $(terraform output -raw cloudfront_https_url)"
+    echo "  HTTP URL (ALB):         $(terraform output -raw application_url)"
     echo ""
-    
-    log_info "プロキシサーバー情報:"
-    echo "  EC2 IP:     $(terraform output -raw proxy_public_ip)"
-    echo ""
-    
+
     log_info "監視コマンド:"
     echo "  ECS ログ:   aws logs tail $(terraform output -raw cloudwatch_log_group) --follow"
-    echo "  プロキシログ: aws logs tail /aws/ec2/$(terraform output -raw app_name)-proxy --follow"
     echo ""
-    
+
     log_warning "次のステップ:"
     echo "  1. Databricks OAuth設定でRedirect URIを更新:"
-    echo "     https://ecs-databricks-oauth.loca.lt/oauth/callback"
-    echo "  2. アプリケーションにアクセスしてテスト"
-    
+    echo "     $(terraform output -raw oauth_redirect_uri_cloudfront)"
+    echo "  2. アプリケーションにアクセスしてテスト:"
+    echo "     $(terraform output -raw cloudfront_https_url)"
+
     cd ..
 }
 
