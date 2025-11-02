@@ -81,17 +81,27 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# Security Group for ALB (IP制限あり)
+# Security Group for ALB (IP制限あり + CloudFront)
 resource "aws_security_group" "alb" {
   name_prefix = "${var.app_name}-alb-"
   vpc_id      = aws_vpc.main.id
 
+  # 特定IPからの直接アクセス
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = var.allowed_ips
     description = "Allow HTTP access from specific IPs only"
+  }
+
+  # CloudFrontからのアクセス（グローバルIPレンジ）
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    prefix_list_ids = [data.aws_ec2_managed_prefix_list.cloudfront.id]
+    description = "Allow HTTP access from CloudFront"
   }
 
   ingress {
@@ -112,6 +122,11 @@ resource "aws_security_group" "alb" {
   tags = merge(var.tags, {
     Name = "${var.app_name}-alb-sg"
   })
+}
+
+# CloudFront Managed Prefix List
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
 }
 
 # Security Group for ECS
@@ -288,7 +303,7 @@ resource "aws_ecs_task_definition" "app" {
         },
         {
           name  = "REDIRECT_URI"
-          value = var.oauth_redirect_uri
+          value = "https://${aws_cloudfront_distribution.main.domain_name}/oauth/callback"
         }
       ]
 
