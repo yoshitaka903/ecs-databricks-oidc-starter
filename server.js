@@ -3,7 +3,7 @@ const session = require('express-session');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
-const jwksClient = require('jwks-client');
+const jwksRsa = require('jwks-rsa');
 require('dotenv').config();
 
 const app = express();
